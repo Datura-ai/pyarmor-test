@@ -8,6 +8,7 @@ KEYWORD_MIN_LENGTH = 10
 GITHUB_USER = "Datura-ai"
 BASE_URL = f"https://api.github.com/users/{GITHUB_USER}/repos"
 WORK_DIR = "./repo_temp"
+REPO_TO_EXCLUDE = ["pyarmor-test"] # this one silly
 
 # Load keywords from process.dump and use full lines with a minimum length of 10 characters
 with open('process.dump', 'r') as f:
@@ -33,6 +34,8 @@ if repos_response.status_code == 200:
     for repo in repos:
         repo_name = repo['name']
         repo_url = repo['clone_url']
+        if repo_name in REPO_TO_EXCLUDE:
+            continue
         print(f"Cloning repository: {repo_name}")
         
         # Clone the repository
