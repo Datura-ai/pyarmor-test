@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import requests
 
+KEYWORD_MIN_LENGTH = 10
 GITHUB_USER = "Datura-ai"
 BASE_URL = f"https://api.github.com/users/{GITHUB_USER}/repos"
 WORK_DIR = "./repo_temp"
@@ -13,7 +14,7 @@ with open('process.dump', 'r') as f:
     data = f.readlines()
 
 # Filter keywords to use only full lines with at least 10 characters
-keywords = [line.strip() for line in data if len(line.strip()) >= 10]
+keywords = [line.strip() for line in data if len(line.strip()) >= KEYWORD_MIN_LENGTH]
 
 # List to store results for individual files
 file_matches = []
