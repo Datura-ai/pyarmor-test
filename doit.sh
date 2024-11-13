@@ -36,5 +36,8 @@ echo "Yo! Look at this..."
 # grepy grep
 grep -i 'miner' process.dump
 
+# again
+sleep 3
+
 # process the dump
 python3 find_match.py
