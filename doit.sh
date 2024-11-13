@@ -15,6 +15,9 @@ pip install requests
 echo "Looking for this?..."
 python3 obfuscated_file.py
 
+# gloat hehe
+sleep 3
+
 # clear the previous dump files
 rm -rf *.dump;
 
