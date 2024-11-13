@@ -8,15 +8,15 @@ GITHUB_USER = "Datura-ai"
 BASE_URL = f"https://api.github.com/users/{GITHUB_USER}/repos"
 WORK_DIR = "./repo_temp"
 
-# Load keywords from process.dump and use full lines with a minimum length of 5 characters
+# Load keywords from process.dump and use full lines with a minimum length of 10 characters
 with open('process.dump', 'r') as f:
     data = f.readlines()
 
-# Filter keywords to use only full lines with at least 5 characters
-keywords = [line.strip() for line in data if len(line.strip()) >= 5]
+# Filter keywords to use only full lines with at least 10 characters
+keywords = [line.strip() for line in data if len(line.strip()) >= 10]
 
 # List to store results for individual files
-file_hits = []
+file_matches = []
 
 # Delete the directory if it already exists
 if os.path.exists(WORK_DIR):
@@ -45,18 +45,20 @@ if repos_response.status_code == 200:
                 if file.endswith('.py'):
                     file_path = os.path.join(root, file)
                     try:
-                        # Read file content and count hits for each keyword
+                        # Read file content and calculate the match score for each keyword
                         print(f"Reading file: {file_path}")
                         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                             file_content = f.read()
-                            hits_in_file = sum(file_content.count(keyword) for keyword in keywords)
                             
-                            # Only store if there are any hits
-                            if hits_in_file > 0:
-                                file_hits.append({
+                            # Calculate match score by summing lengths of matched keywords
+                            match_score = sum(len(keyword) for keyword in keywords if keyword in file_content)
+                            
+                            # Only store if there is a non-zero match score
+                            if match_score > 0:
+                                file_matches.append({
                                     'repo': repo_name,
                                     'file_path': file_path,
-                                    'hits': hits_in_file
+                                    'match_score': match_score
                                 })
                     except Exception as e:
                         print(f"Error reading {file_path}: {e}")
@@ -68,13 +70,13 @@ if repos_response.status_code == 200:
 else:
     print("Failed to retrieve repositories.")
 
-# Sort files by hits in descending order and keep only the top 20
-top_files = sorted(file_hits, key=lambda x: x['hits'], reverse=True)[:20]
+# Sort files by match score in descending order and keep only the top 20
+top_files = sorted(file_matches, key=lambda x: x['match_score'], reverse=True)[:20]
 
 # Display top 20 results
-print("\nTop 20 Files with Most Hits:")
+print("\nTop 20 Files with Highest Match Scores:")
 for idx, file_info in enumerate(top_files, 1):
-    print(f"{idx}. Repo: {file_info['repo']} | File: {file_info['file_path']} | Hits: {file_info['hits']}")
+    print(f"{idx}. Repo: {file_info['repo']} | File: {file_info['file_path']} | Match Score: {file_info['match_score']}")
 
 # Retrieve the top file by re-cloning its repository and copying the file to found.py
 if top_files:
@@ -104,4 +106,4 @@ if top_files:
     print(f"Cleaned up repository: {repo_name}")
 
 else:
-    print("No files with hits found.")
+    print("No files with matches found.")
