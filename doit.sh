@@ -1,4 +1,5 @@
 #!/bin/bash
+# Credit to: https://medium.com/@liad_levy/reverse-pyarmor-obfuscated-python-script-using-memory-dump-technique-9823b856be7a
 
 sudo apt install -y python3.11 python3.11-venv git
 deactivate
