@@ -8,12 +8,12 @@ GITHUB_USER = "Datura-ai"
 BASE_URL = f"https://api.github.com/users/{GITHUB_USER}/repos"
 WORK_DIR = "./repo_temp"
 
-# Load keywords from process.dump
+# Load keywords from process.dump and use full lines with a minimum length of 5 characters
 with open('process.dump', 'r') as f:
-    data = f.read()
+    data = f.readlines()
 
-# Extract words (potential keywords) from the data
-keywords = re.findall(r'[\w\.-]+', data)
+# Filter keywords to use only full lines with at least 5 characters
+keywords = [line.strip() for line in data if len(line.strip()) >= 5]
 
 # List to store results for individual files
 file_hits = []
@@ -56,8 +56,7 @@ if repos_response.status_code == 200:
                                 file_hits.append({
                                     'repo': repo_name,
                                     'file_path': file_path,
-                                    'hits': hits_in_file,
-                                    'download_url': file_path.replace(repo_path, f"https://raw.githubusercontent.com/{GITHUB_USER}/{repo_name}/main")
+                                    'hits': hits_in_file
                                 })
                     except Exception as e:
                         print(f"Error reading {file_path}: {e}")
@@ -77,16 +76,32 @@ print("\nTop 20 Files with Most Hits:")
 for idx, file_info in enumerate(top_files, 1):
     print(f"{idx}. Repo: {file_info['repo']} | File: {file_info['file_path']} | Hits: {file_info['hits']}")
 
-# Download the file with the most hits and save it as found.py
+# Retrieve the top file by re-cloning its repository and copying the file to found.py
 if top_files:
     top_file = top_files[0]
-    download_url = top_file['download_url']
-    response = requests.get(download_url)
-    if response.status_code == 200:
-        with open("found.py", "w") as f:
-            f.write(response.text)
-        print(f"\nDownloaded the top file to 'found.py' from {download_url}")
+    repo_name = top_file['repo']
+    file_path = top_file['file_path']
+
+    print(f"\nRe-cloning repository: {repo_name} to retrieve top file.")
+    repo_url = f"https://github.com/{GITHUB_USER}/{repo_name}.git"
+    repo_path = os.path.join(WORK_DIR, repo_name)
+
+    # Clone the repository again
+    subprocess.run(["git", "clone", repo_url, repo_path], check=True)
+
+    # Define the full path to the file in the re-cloned repo
+    top_file_path = os.path.join(repo_path, os.path.relpath(file_path, start=repo_path))
+
+    # Copy the top file to found.py
+    if os.path.exists(top_file_path):
+        shutil.copy(top_file_path, "found.py")
+        print(f"Copied top file to 'found.py' from {top_file_path}")
     else:
-        print("Failed to download the top file.")
+        print("Top file not found after re-cloning.")
+
+    # Clean up by removing the repository folder
+    shutil.rmtree(repo_path)
+    print(f"Cleaned up repository: {repo_name}")
+
 else:
     print("No files with hits found.")
